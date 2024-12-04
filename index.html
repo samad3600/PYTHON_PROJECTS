@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+</head>
+<body>
+    <h1>AI Chatbot</h1>
+    <div id="chatHistory"></div>
+    <div>
+        <input type="text" id="userInput" placeholder="Type your message...">
+        <button id="sendButton">Send</button>
+        <button id="voiceButton">🎙️ Voice Input</button>
+        <button id="speakButton">🔊 Speak Last Response</button>
+    </div>
+
+    <script>
+        const chatHistory = document.getElementById('chatHistory');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const voiceButton = document.getElementById('voiceButton');
+        const speakButton = document.getElementById('speakButton');
+        let lastResponse = '';
+
+        sendButton.addEventListener('click', () => {
+            const message = userInput.value;
+            if (!message) return;
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                lastResponse = data.reply;
+                chatHistory.innerHTML += `<p>AI: ${data.reply}</p>`;
+            });
+        });
+
+        voiceButton.addEventListener('click', () => {
+            fetch('/speech_to_text', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        userInput.value = data.text;
+                    }
+                });
+        });
+
+        speakButton.addEventListener('click', () => {
+            if (lastResponse) {
+                fetch('/speak', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: lastResponse })
+                });
+            }
+        });
+    </script>
+</body>
+</html>
